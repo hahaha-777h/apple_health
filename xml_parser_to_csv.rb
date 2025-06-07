@@ -1,16 +1,16 @@
 require 'nokogiri'
 require 'date'
-require 'pp' # 結果を綺麗に表示するために使用
 
 # SAXパーサーの動作を定義するハンドラークラス
 class HealthDataHandler < Nokogiri::XML::SAX::Document
   # 処理したいデータタイプと、最終的なカラム名の対応表
-  # ここに追加すれば、集計する項目を増やせます
   TYPE_MAPPING = {
     'HKQuantityTypeIdentifierStepCount' => :step_count,
-    # 'HKQuantityTypeIdentifierDistanceWalkingRunning' => :distance_km
-    'HKQuantityTypeIdentifierActiveEnergyBurned' => :active_calories, # ← このように追加
-    'HKQuantityTypeIdentifierFlightsClimbed' => :flights_climbed
+    'HKQuantityTypeIdentifierActiveEnergyBurned' => :active_calories,
+    'HKQuantityTypeIdentifierFlightsClimbed' => :flights_climbed,
+    'HKQuantityTypeIdentifierHeadphoneAudioExposure' => :headphone_volume,
+    'HKQuantityTypeIdentifierWalkingSpeed' => :walking_speed,
+    'HKQuantityTypeIdentifierWalkingStepLength' => :step_length
   }.freeze
 
   # 集計結果を格納するハッシュ
@@ -67,26 +67,24 @@ puts "Parsing #{file_path}..."
 parser.parse_file(file_path)
 puts "Parsing complete!"
 
-# 4. 結果を表示
 puts "\n--- Aggregated Data ---"
 # 日付順に並び替えて表示
 sorted_data = handler.data.sort.to_h
-# pp sorted_data
-
-# これで sorted_data というハッシュに日付ごとの集計データが格納されました。
-# あとはこのハッシュを元にDBに保存したり、CSVに出力したりできます。
-
 
 require 'csv'
 
 # CSVファイルに出力
 CSV.open('health_summary.csv', 'w') do |csv|
   # ヘッダー行を書き込む
-  csv << ['date', 'step_count', 'burned_energy', 'flights_climbed']
+  csv << ['date', 'step_count', 'burned_energy', 
+              'flights_climbed', 'headphone_volume',
+              'walking_speed', 'step_length']
   
   # 各日付のデータを書き込む
   sorted_data.each do |date, metrics|
-    csv << [date, metrics[:step_count].to_i, metrics[:active_calories].to_i, metrics[:flights_climbed].to_i]
+    csv << [date, metrics[:step_count].to_i, metrics[:active_calories].to_i,
+              metrics[:flights_climbed].to_i, metrics[:headphone_volume].to_i,
+              metrics[:walking_speed].to_i, metrics[:step_length].to_i]
   end
 end
 
