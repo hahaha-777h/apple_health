@@ -1,2 +1,8 @@
 *.xml
 *.csv
+*.gem
+*.db
+*.db-shm
+*.db_wal
+*.sqlite3
+output

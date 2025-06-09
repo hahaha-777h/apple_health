@@ -1,12 +1,13 @@
 require 'nokogiri'
 require 'date'
+require 'csv'
 
 # SAXパーサーの動作を定義するハンドラークラス
 class HealthDataHandler < Nokogiri::XML::SAX::Document
   # 処理したいデータタイプと、最終的なカラム名の対応表
   TYPE_MAPPING = {
     'HKQuantityTypeIdentifierStepCount' => :step_count,
-    'HKQuantityTypeIdentifierActiveEnergyBurned' => :active_calories,
+    'HKQuantityTypeIdentifierActiveEnergyBurned' => :burned_energy,
     'HKQuantityTypeIdentifierFlightsClimbed' => :flights_climbed,
     'HKQuantityTypeIdentifierHeadphoneAudioExposure' => :headphone_volume,
     'HKQuantityTypeIdentifierWalkingSpeed' => :walking_speed,
@@ -23,7 +24,7 @@ class HealthDataHandler < Nokogiri::XML::SAX::Document
 
   # XMLの開始タグが見つかるたびに呼ばれるメソッド
   def start_element(name, attrs = [])
-
+    #'Record'タグじゃなかったら無視する
     return unless name == 'Record'
 
     attributes = attrs.to_h
@@ -52,40 +53,42 @@ class HealthDataHandler < Nokogiri::XML::SAX::Document
   end
 end
 
-# --- メインの処理 ---
 
-# 1. ハンドラーを準備
-handler = HealthDataHandler.new
-
-# 2. SAXパーサーを作成
-parser = Nokogiri::XML::SAX::Parser.new(handler)
-
-# 3. XMLファイルを指定して解析を実行
-# ファイル名はご自身のものに変更してください
-file_path = 'export.xml'
-puts "Parsing #{file_path}..."
-parser.parse_file(file_path)
-puts "Parsing complete!"
-
-puts "\n--- Aggregated Data ---"
-# 日付順に並び替えて表示
-sorted_data = handler.data.sort.to_h
-
-require 'csv'
-
-# CSVファイルに出力
-CSV.open('health_summary.csv', 'w') do |csv|
-  # ヘッダー行を書き込む
-  csv << ['date', 'step_count', 'burned_energy', 
-              'flights_climbed', 'headphone_volume',
-              'walking_speed', 'step_length']
+def convert_health_xml_to_csv(input_xml, output_csv)
   
-  # 各日付のデータを書き込む
-  sorted_data.each do |date, metrics|
-    csv << [date, metrics[:step_count].to_i, metrics[:active_calories].to_i,
-              metrics[:flights_climbed].to_i, metrics[:headphone_volume].to_i,
-              metrics[:walking_speed].to_i, metrics[:step_length].to_i]
+  if !File.exist?(input_xml)
+    STDERR.puts("File not found #{input_xml}")
+  end
+  # 1. ハンドラーを準備
+  handler = HealthDataHandler.new
+  
+  # 2. SAXパーサーを作成
+  parser = Nokogiri::XML::SAX::Parser.new(handler)
+  
+  # 3. XMLファイルを指定して解析を実行
+  parser.parse_file(input_xml)
+  
+  # 日付順に並び替えて表示
+  sorted_data = handler.data.sort.to_h
+  
+  # CSVファイルに出力
+  CSV.open(output_csv, 'w') do |csv|
+    # ヘッダー行を書き込む
+    csv << ['date', 'step_count', 'burned_energy', 
+                'flights_climbed', 'headphone_volume',
+                'walking_speed', 'step_length']
+    
+    # 各日付のデータを書き込む
+    sorted_data.each do |date, metrics|
+      csv << [date, metrics[:step_count].to_i,
+                    metrics[:burned_energy].to_i,
+                    metrics[:flights_climbed].to_i,
+                    metrics[:headphone_volume].to_i,
+                    metrics[:walking_speed].to_i,
+                    metrics[:step_length].to_i]
+    end
   end
 end
 
-puts "\nSuccessfully saved to health_summary.csv"
+
+# convert_health_xml_to_csv("../xml/export.xml", "test.csv")

@@ -13,3 +13,9 @@ Data analysed in this program is bellow;
 4, headphone_volume
 5, walking_speed   
 6, step_length
+
+---How to use---
+
+1, Put your health data that is exported by "apple health" in xml directory.
+2, exec main.rb (if the name of your data is not "export.xml", change main.rb or filename.)
+
