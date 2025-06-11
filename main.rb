@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require "./src/tables.rb"
 require "./src/xml_parser_to_csv.rb"
 require "./src/read_health_csv.rb"

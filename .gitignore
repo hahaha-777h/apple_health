@@ -6,3 +6,4 @@
 *.db_wal
 *.sqlite3
 output
+*.png
