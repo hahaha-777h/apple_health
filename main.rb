@@ -12,4 +12,4 @@ daily_data = read_health_csv("./health_summary.csv")
 
 update_data_from_csv(daily_data)
 
-show_data
+show_data(5)

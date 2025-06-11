@@ -1,4 +1,4 @@
-#一行目をlabelにして、dateをkeyとしたら二次元配列を作る。
+#一行目をlabelにして、dateをkeyとしたらハッシュを作る。
 def read_health_csv(csv_file_path)
   daily_data = {}
   label = []

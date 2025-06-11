@@ -6,6 +6,8 @@ def show_data(limit = nil)
   end
 
   # puts("date ")
+  
+  count = 0
 
   dates.each do |date|
     date.health_metrics.each do |metrics|
@@ -17,5 +19,7 @@ def show_data(limit = nil)
             walking_speed: #{metrics.walking_speed} 
             step_length: #{metrics.step_length}")
     end
+    count += 1
+    return if limit && (count == limit)
   end
 end
