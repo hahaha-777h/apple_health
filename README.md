@@ -18,4 +18,4 @@ Data analysed in this program is bellow;
 
 1, Put your health data that is exported by "apple health" in xml directory.
 2, exec main.rb (if the name of your data is not "export.xml", change main.rb or filename.)
-
+3, You can visualize your data by using python code that is located in "src/analysis"
