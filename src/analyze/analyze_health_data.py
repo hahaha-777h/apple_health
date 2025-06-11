@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import calendar
 
 DB_PATH = "../../db/health_data.db"
 
@@ -53,7 +54,7 @@ try:
 	#Histogram
 	print("Here is histogram")
 	
-	plt.figure(figsize=(13, 8))
+	plt.figure(figsize=(15, 8))
 	for i, col in enumerate(metrics_to_be_plot):
 		plt.subplot(2, 3, i + 1)
 		sns.histplot(df_processed[col].dropna(), bins=40,  kde=True)
@@ -68,42 +69,47 @@ try:
 	# Monthly and weekly analysis
 
 	df_processed["day_of_week"] = df_processed["record_date"].dt.day_name()
-	df_processed["month"] = df_processed["record_date"].dt.to_period('M').astype(str)
+	df_processed["month"] = df_processed["record_date"].dt.month
 
 	day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-	df_weekday_stats = df_processed.groupby("day_of_week")[metrics_to_be_plot].mean().reindex(day_order)
+	df_weekday_stats = df_processed.groupby("day_of_week")[metrics_to_be_plot].median().reindex(day_order)
 
-	for metrics in metrics_to_be_plot:
-		plt.figure(figsize=(10,5))
-		sns.barplot(x=df_weekday_stats.index, y=df_weekday_stats[metrics], order=day_order, palette="viridis")
+	fig_weekly, axes_weekly = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
+	axes_weekly = axes_weekly.flatten()
 
-		title = f"Average {metrics.replace('_', ' ').title()} by Day of Week"
-		ylabel = f"Average {metrics.replace('_', ' ').title()}"
+	for i, metrics in enumerate(metrics_to_be_plot):
+		sns.barplot(ax=axes_weekly[i], x=df_weekday_stats.index, y=df_weekday_stats[metrics], order=day_order, palette="viridis", hue=df_weekday_stats.index, legend=False)
+		title = f"Median {metrics.replace('_', ' ').title()} by Day of Week"
+		ylabel = f"Median {metrics.replace('_', ' ').title()}"
 
-		plt.title(title)
-		plt.xlabel("Day of week")
-		plt.ylabel(ylabel)
-		plt.xticks(rotation=30)
-		plt.tight_layout()
+		axes_weekly[i].set_title(title)
+		axes_weekly[i].set_xlabel("Day of week")
+		axes_weekly[i].set_ylabel(ylabel)
+		axes_weekly[i].tick_params(axis = "x", rotation=45)
 		# plt.show()
 
-
-
-	df_monthly_stats = df_processed.groupby("month")[metrics_to_be_plot].mean()
 	
-	for metrics in metrics_to_be_plot:
-		plt.figure(figsize=(10,5))
-		sns.barplot(x=df_monthly_stats.index, y=df_monthly_stats[metrics], palette="viridis")
 
-		title = f"Average {metrics.replace('_', ' ').title()}"
-		ylabel = f"Average {metrics.replace('_', ' ').title()}"
+	df_monthly_stats = df_processed.groupby("month")[metrics_to_be_plot].median()
+	
+	month_names = [calendar.month_abbr[i] for i in range(1, 13)]
+	df_monthly_stats.index = df_monthly_stats.index.map(lambda x: calendar.month_abbr[x])
+	df_monthly_stats = df_monthly_stats.reindex(month_names)
 
-		plt.title(title)
-		plt.xlabel("Month")
-		plt.ylabel(ylabel)
-		plt.xticks(rotation=45, ha="right", fontsize=8)
-		plt.tight_layout()
+	fig_monthly, axes_monthly = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
+	axes_monthly = axes_monthly.flatten()
+
+	for i, metrics in enumerate(metrics_to_be_plot):
+		sns.barplot(ax=axes_monthly[i], x=df_monthly_stats.index, y=df_monthly_stats[metrics], palette="viridis")
+
+		title = f"Median {metrics.replace('_', ' ').title()}"
+		ylabel = f"Median {metrics.replace('_', ' ').title()}"
+
+		axes_monthly[i].set_title(title)
+		axes_monthly[i].set_xlabel("Month")
+		axes_monthly[i].set_ylabel(ylabel)
+		axes_weekly[i].tick_params(axis = "x", rotation=45)
 		# plt.show()
 	
 	plt.show()
